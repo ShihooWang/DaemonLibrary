@@ -1,4 +1,4 @@
-package daemon.shihoo.com.daemonlibrary;
+package com.shihoo.daemonlibrary;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;

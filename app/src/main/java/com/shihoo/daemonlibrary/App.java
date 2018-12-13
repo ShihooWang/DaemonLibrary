@@ -1,4 +1,4 @@
-package daemon.shihoo.com.daemonlibrary;
+package com.shihoo.daemonlibrary;
 
 import android.app.Application;
 
