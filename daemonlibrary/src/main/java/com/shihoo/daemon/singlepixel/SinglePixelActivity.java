@@ -36,10 +36,10 @@ public class SinglePixelActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        if (!SystemUtils.isAppAlive(this, Constant.PACKAGE_NAME)) {
-            Intent intentAlive = new Intent(this, WatchDogService.class);
-            startService(intentAlive);
-        }
+        Intent intentAlive = new Intent(this, WatchDogService.class);
+        startService(intentAlive);
+//        if (!SystemUtils.isAppAlive(this, Constant.PACKAGE_NAME)) {
+//        }
         super.onDestroy();
     }
 }
