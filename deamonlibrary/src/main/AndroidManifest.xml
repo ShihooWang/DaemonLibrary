@@ -1,2 +1,65 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="shihoo.com.deamon" />
+    package="com.shihoo.daemon" >
+
+
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
+
+
+    <application
+        android:label="@string/app_name"
+        >
+        <receiver
+            android:name="com.shihoo.daemon.WakeUpReceiver"
+            android:process=":watch">
+            <intent-filter>
+                <action android:name="android.intent.action.USER_PRESENT"/>
+                <action android:name="android.intent.action.ACTION_POWER_CONNECTED"/>
+                <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED"/>
+                <action android:name="com.shihoo.CANCEL_JOB_ALARM_SUB"/>
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name="com.shihoo.daemon.WakeUpReceiver$WakeUpAutoStartReceiver"
+            android:process=":watch">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_ADDED"/>
+                <action android:name="android.intent.action.PACKAGE_REMOVED"/>
+                <data android:scheme="package"/>
+            </intent-filter>
+        </receiver>
+
+        <service android:name="com.shihoo.daemon.AbsWorkService$WorkNotificationService"/>
+
+        <service
+            android:name="com.shihoo.daemon.JobSchedulerService"
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            android:enabled="true"
+            android:exported="true"
+            android:process=":watch"/>
+
+        <service
+            android:name="com.shihoo.daemon.WatchDogService"
+            android:process=":watch"/>
+
+        <service
+            android:name="com.shihoo.daemon.WatchDogService$WatchDogNotificationService"
+            android:process=":watch"/>
+
+        <activity
+            android:name="com.shihoo.daemon.singlepixel.SinglePixelActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize|navigation|keyboard"
+            android:excludeFromRecents="true"
+            android:finishOnTaskLaunch="false"
+            android:launchMode="singleInstance"
+            android:theme="@style/SingleActivityStyle" />
+
+    </application>
+
+</manifest>
