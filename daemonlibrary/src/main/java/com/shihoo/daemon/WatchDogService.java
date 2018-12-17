@@ -6,11 +6,16 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Messenger;
 import android.util.Log;
 
 import java.util.concurrent.TimeUnit;
@@ -22,55 +27,87 @@ import io.reactivex.functions.Consumer;
 import com.shihoo.daemon.singlepixel.ScreenManager;
 import com.shihoo.daemon.singlepixel.ScreenReceiverUtil;
 
-import static android.content.ContentValues.TAG;
 
 public class WatchDogService extends Service {
 
     protected static final int HASH_CODE = 2;
 
-    protected static Disposable sDisposable;
-    protected static PendingIntent sPendingIntent;
+    protected static Disposable mDisposable;
+    protected static PendingIntent mPendingIntent;
+
+    private StopBroadcastReceiver stopBroadcastReceiver;
+
+    private boolean IsShouldStopSelf;
+
+    /**
+     * 服务绑定相关的操作
+     */
+    private AbsServiceConnection mConnection = new AbsServiceConnection() {
+
+
+        @Override
+        public void onDisconnected(ComponentName name) {
+            if (!IsShouldStopSelf) {
+                startBindWorkServices();
+            }
+        }
+    };
+
+    private void startBindWorkServices(){
+        if (DaemonEnv.mWorkServiceClass != null) {
+            DaemonEnv.startServiceMayBind(WatchDogService.this, DaemonEnv.mWorkServiceClass, mConnection,IsShouldStopSelf);
+            DaemonEnv.startServiceSafely(WatchDogService.this,
+                    new Intent(WatchDogService.this, PlayMusicService.class),!IsShouldStopSelf);
+        }
+    }
+
 
     /**
      * 守护服务，运行在:watch子进程中
      */
     protected final int onStart(Intent intent, int flags, int startId) {
 
-        if (!DaemonEnv.sInitialized) return START_STICKY;
-
-        if (sDisposable != null && !sDisposable.isDisposed()) return START_STICKY;
+        if (mDisposable != null && !mDisposable.isDisposed()) {
+            return START_STICKY;
+        }
 
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.N) {
             startForeground(HASH_CODE, new Notification());
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2)
-                DaemonEnv.startServiceSafely(new Intent(DaemonEnv.sApp, WatchDogNotificationService.class));
+                DaemonEnv.startServiceSafely(WatchDogService.this,
+                        new Intent(WatchDogService.this, WatchDogNotificationService.class),!IsShouldStopSelf);
         }
 
         //定时检查 AbsWorkService 是否在运行，如果不在运行就把它拉起来
         //Android 5.0+ 使用 JobScheduler，效果比 AlarmManager 好
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            JobInfo.Builder builder = new JobInfo.Builder(HASH_CODE, new ComponentName(DaemonEnv.sApp, JobSchedulerService.class));
-            builder.setPeriodic(DaemonEnv.getWakeUpInterval());
+            JobInfo.Builder builder = new JobInfo.Builder(HASH_CODE,
+                    new ComponentName(WatchDogService.this, JobSchedulerService.class));
+            builder.setPeriodic(DaemonEnv.getWakeUpInterval(DaemonEnv.MINIMAL_WAKE_UP_INTERVAL));
             //Android 7.0+ 增加了一项针对 JobScheduler 的新限制，最小间隔只能是下面设定的数字
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) builder.setPeriodic(JobInfo.getMinPeriodMillis(), JobInfo.getMinFlexMillis());
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                builder.setPeriodic(JobInfo.getMinPeriodMillis(), JobInfo.getMinFlexMillis());
+            }
             builder.setPersisted(true);
             JobScheduler scheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
             scheduler.schedule(builder.build());
         } else {
             //Android 4.4- 使用 AlarmManager
             AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-            Intent i = new Intent(DaemonEnv.sApp, DaemonEnv.sServiceClass);
-            sPendingIntent = PendingIntent.getService(DaemonEnv.sApp, HASH_CODE, i, PendingIntent.FLAG_UPDATE_CURRENT);
-            am.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + DaemonEnv.getWakeUpInterval(), DaemonEnv.getWakeUpInterval(), sPendingIntent);
+            Intent i = new Intent(WatchDogService.this, DaemonEnv.mWorkServiceClass);
+            mPendingIntent = PendingIntent.getService(WatchDogService.this, HASH_CODE, i, PendingIntent.FLAG_UPDATE_CURRENT);
+            am.setRepeating(AlarmManager.RTC_WAKEUP,
+                    System.currentTimeMillis() + DaemonEnv.getWakeUpInterval(DaemonEnv.MINIMAL_WAKE_UP_INTERVAL),
+                    DaemonEnv.getWakeUpInterval(DaemonEnv.MINIMAL_WAKE_UP_INTERVAL), mPendingIntent);
         }
 
         //使用定时 Observable，避免 Android 定制系统 JobScheduler / AlarmManager 唤醒间隔不稳定的情况
-        sDisposable = Observable
-                .interval(DaemonEnv.getWakeUpInterval(), TimeUnit.MILLISECONDS)
+        mDisposable = Observable
+                .interval(DaemonEnv.getWakeUpInterval(DaemonEnv.MINIMAL_WAKE_UP_INTERVAL), TimeUnit.MILLISECONDS)
                 .subscribe(new Consumer<Long>() {
                     @Override
                     public void accept(Long aLong) throws Exception {
-                        DaemonEnv.startServiceMayBind(DaemonEnv.sServiceClass);
+                        startBindWorkServices();
                     }
                 }, new Consumer<Throwable>() {
                     @Override
@@ -78,9 +115,9 @@ public class WatchDogService extends Service {
                         throwable.printStackTrace();
                     }
                 });
-
+        startBindWorkServices();
         //守护 Service 组件的启用状态, 使其不被 MAT 等工具禁用
-        getPackageManager().setComponentEnabledSetting(new ComponentName(getPackageName(), DaemonEnv.sServiceClass.getName()),
+        getPackageManager().setComponentEnabledSetting(new ComponentName(getPackageName(), DaemonEnv.mWorkServiceClass.getName()),
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
 
         return START_STICKY;
@@ -94,13 +131,14 @@ public class WatchDogService extends Service {
     @Override
     public final IBinder onBind(Intent intent) {
         onStart(intent, 0, 0);
-        return null;
+        return new Messenger(new Handler()).getBinder();
     }
 
-    protected void onEnd(Intent rootIntent) {
-        if (!DaemonEnv.sInitialized) return;
-        DaemonEnv.startServiceMayBind(DaemonEnv.sServiceClass);
-        DaemonEnv.startServiceMayBind(WatchDogService.class);
+    private void onEnd(Intent rootIntent) {
+        startBindWorkServices();
+        DaemonEnv.startServiceSafely(WatchDogService.this,
+                new Intent(WatchDogService.this,WatchDogService.class)
+                ,!IsShouldStopSelf);
     }
 
     /**
@@ -117,6 +155,51 @@ public class WatchDogService extends Service {
     @Override
     public void onDestroy() {
         onEnd(null);
+        startUnRegisterReceiver();
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        startRegisterReceiver();
+        createScreenListener();
+    }
+
+    /**
+     * 停止运行本服务,本进程
+     */
+    public void stopService(){
+        IsShouldStopSelf = true;
+        startUnRegisterReceiver();
+        cancelJobAlarmSub();
+        exit();
+    }
+
+    private void exit(){
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                stopSelf();
+                System.exit(0);
+            }
+        },1000);
+    }
+
+
+    private void startRegisterReceiver(){
+        if (stopBroadcastReceiver == null){
+            stopBroadcastReceiver = new StopBroadcastReceiver();
+            IntentFilter intentFilter = new IntentFilter();
+            intentFilter.addAction(DaemonEnv.ACTION_CANCEL_JOB_ALARM_SUB);
+            registerReceiver(stopBroadcastReceiver,intentFilter);
+        }
+    }
+
+    private void startUnRegisterReceiver(){
+        if (stopBroadcastReceiver != null){
+            unregisterReceiver(stopBroadcastReceiver);
+            stopBroadcastReceiver = null;
+        }
     }
 
     /**
@@ -125,16 +208,19 @@ public class WatchDogService extends Service {
      * 因 WatchDogService 运行在 :watch 子进程, 请勿在主进程中直接调用此方法.
      * 而是向 WakeUpReceiver 发送一个 Action 为 WakeUpReceiver.ACTION_CANCEL_JOB_ALARM_SUB 的广播.
      */
-    public static void cancelJobAlarmSub() {
-        if (!DaemonEnv.sInitialized) return;
+    public void cancelJobAlarmSub() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            JobScheduler scheduler = (JobScheduler) DaemonEnv.sApp.getSystemService(JOB_SCHEDULER_SERVICE);
+            JobScheduler scheduler = (JobScheduler) WatchDogService.this.getSystemService(JOB_SCHEDULER_SERVICE);
             scheduler.cancel(HASH_CODE);
         } else {
-            AlarmManager am = (AlarmManager) DaemonEnv.sApp.getSystemService(ALARM_SERVICE);
-            if (sPendingIntent != null) am.cancel(sPendingIntent);
+            AlarmManager am = (AlarmManager) WatchDogService.this.getSystemService(ALARM_SERVICE);
+            if (mPendingIntent != null) {
+                am.cancel(mPendingIntent);
+            }
         }
-        if (sDisposable != null) sDisposable.dispose();
+        if (mDisposable !=null && !mDisposable.isDisposed()){
+            mDisposable.dispose();
+        }
     }
 
     public static class WatchDogNotificationService extends Service {
@@ -160,7 +246,7 @@ public class WatchDogService extends Service {
     private ScreenManager mScreenManager;
 
     private void createScreenListener(){
-        //        注册锁屏广播监听器
+        //   注册锁屏广播监听器
         mScreenListener = new ScreenReceiverUtil(this);
         mScreenManager = ScreenManager.getInstance(this);
         mScreenListener.setScreenReceiverListener(mScreenListenerer);
@@ -169,21 +255,31 @@ public class WatchDogService extends Service {
 
     private ScreenReceiverUtil.SreenStateListener mScreenListenerer = new ScreenReceiverUtil.SreenStateListener() {
         @Override
-        public void onSreenOn() {
-            mScreenManager.finishActivity();
-            Log.d(TAG, "关闭了1像素Activity");
+        public void onSreenOn() {  // 亮屏
+//            mScreenManager.finishActivity();
+
 
         }
 
         @Override
-        public void onSreenOff() {
+        public void onSreenOff() {  //锁屏
             mScreenManager.startActivity();
-            Log.d(TAG, "打开了1像素Activity");
+            Log.d("wsh-daemon", "打开了1像素Activity");
         }
 
         @Override
         public void onUserPresent() {
+            mScreenManager.finishActivity(); // 解锁
+            Log.d("wsh-daemon", "关闭了1像素Activity");
         }
     };
 
+
+    class StopBroadcastReceiver extends BroadcastReceiver{
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            stopService();
+        }
+    }
 }

@@ -7,11 +7,6 @@ import android.content.Intent;
 public class WakeUpReceiver extends BroadcastReceiver {
 
     /**
-     * 向 WakeUpReceiver 发送带有此 Action 的广播, 即可在不需要服务运行的时候取消 Job / Alarm / Subscription.
-     */
-    protected static final String ACTION_CANCEL_JOB_ALARM_SUB = "com.shihoo.CANCEL_JOB_ALARM_SUB";
-
-    /**
      * 监听 8 种系统广播 :
      * CONNECTIVITY\_CHANGE, USER\_PRESENT, ACTION\_POWER\_CONNECTED, ACTION\_POWER\_DISCONNECTED,
      * BOOT\_COMPLETED, MEDIA\_MOUNTED, PACKAGE\_ADDED, PACKAGE\_REMOVED.
@@ -21,20 +16,16 @@ public class WakeUpReceiver extends BroadcastReceiver {
      */
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (intent != null && ACTION_CANCEL_JOB_ALARM_SUB.equals(intent.getAction())) {
-            WatchDogService.cancelJobAlarmSub();
-            return;
-        }
-        if (!DaemonEnv.sInitialized) return;
-        DaemonEnv.startServiceMayBind(DaemonEnv.sServiceClass);
+        DaemonEnv.startServiceSafely(context,new Intent(context,WatchDogService.class),
+                WatchProcessPrefHelper.getIsStartDaemon(context));
     }
 
     public static class WakeUpAutoStartReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (!DaemonEnv.sInitialized) return;
-            DaemonEnv.startServiceMayBind(DaemonEnv.sServiceClass);
+            DaemonEnv.startServiceSafely(context,new Intent(context,WatchDogService.class),
+                    WatchProcessPrefHelper.getIsStartDaemon(context));
         }
     }
 }
