@@ -16,16 +16,16 @@ public class WakeUpReceiver extends BroadcastReceiver {
      */
     @Override
     public void onReceive(Context context, Intent intent) {
-        DaemonEnv.startServiceSafely(context,new Intent(context,WatchDogService.class),
-                WatchProcessPrefHelper.getIsStartDaemon(context));
+        DaemonEnv.startServiceSafely(context,WatchDogService.class,
+                !WatchProcessPrefHelper.getIsStartDaemon(context));
     }
 
     public static class WakeUpAutoStartReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            DaemonEnv.startServiceSafely(context,new Intent(context,WatchDogService.class),
-                    WatchProcessPrefHelper.getIsStartDaemon(context));
+            DaemonEnv.startServiceSafely(context,WatchDogService.class,
+                    !WatchProcessPrefHelper.getIsStartDaemon(context));
         }
     }
 }

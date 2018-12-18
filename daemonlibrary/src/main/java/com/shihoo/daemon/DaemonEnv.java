@@ -21,13 +21,14 @@ public final class DaemonEnv {
      * 向 WakeUpReceiver 发送带有此 Action 的广播, 即可在不需要服务运行的时候取消 Job / Alarm / Subscription.
      */
     static final String ACTION_CANCEL_JOB_ALARM_SUB = "com.shihoo.CANCEL_JOB_ALARM_SUB";
+
     static final int DEFAULT_WAKE_UP_INTERVAL = 2 * 60 * 1000; // 默认JobScheduler 唤醒时间为 2 分钟
     static final int MINIMAL_WAKE_UP_INTERVAL = 60 * 1000; // 最小时间为 1 分钟
 
+    // 多进程时，尽量少用静态、单例 此处不得已
     public static Class<? extends AbsWorkService> mWorkServiceClass;
-    /**
-     * @param context Application Context.
-     */
+
+
     static void startServiceMayBind(@NonNull final Context context,
                                     @NonNull final Class<? extends Service> serviceClass,
                                     @NonNull AbsServiceConnection connection,
@@ -39,28 +40,17 @@ public final class DaemonEnv {
         if (!connection.mConnectedState) {
             Log.d("wsh-daemon", "启动并绑定服务 ："+serviceClass.getSimpleName());
             final Intent intent = new Intent(context, serviceClass);
-            startServiceSafely(context, intent,true);
+            startServiceSafely(context, serviceClass,false);
             context.bindService(intent, connection, Context.BIND_AUTO_CREATE);
         }
     }
 
-    public static void startServiceSafely(Context context, Intent i, boolean isNeedStart) {
-        if (!isNeedStart){
+
+    public static void startServiceSafely(Context context, Class<? extends Service> i,boolean isNeedStop) {
+        if (isNeedStop){
             return;
         }
-        Log.d("wsh-daemon", "安全启动服务。。。");
-        try {
-            context.startService(i);
-        } catch (Exception ignored) {
-
-        }
-    }
-
-    public static void startServiceSafely(Context context, Class<? extends Service> i,boolean isNeedStart) {
-        if (!isNeedStart){
-            return;
-        }
-        Log.d("wsh-daemon", "安全启动服务。。B 计划。");
+        Log.d("wsh-daemon", "安全启动服务。。: "+i.getSimpleName());
         try {
             context.startService(new Intent(context,i));
         } catch (Exception ignored) {

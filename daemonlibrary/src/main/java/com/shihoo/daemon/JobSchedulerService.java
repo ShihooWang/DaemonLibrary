@@ -19,8 +19,8 @@ public class JobSchedulerService extends JobService {
     public boolean onStartJob(JobParameters params) {
         Log.d("wsh-daemon", "JobSchedulerService  onStartJob 启动。。。。");
         DaemonEnv.startServiceSafely(JobSchedulerService.this,
-                new Intent(JobSchedulerService.this, WatchDogService.class),
-                WatchProcessPrefHelper.getIsStartDaemon(JobSchedulerService.this));
+                WatchDogService.class,
+                !WatchProcessPrefHelper.getIsStartDaemon(JobSchedulerService.this));
         return false;
     }
 

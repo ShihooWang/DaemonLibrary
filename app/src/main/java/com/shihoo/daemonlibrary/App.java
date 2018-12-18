@@ -23,10 +23,13 @@ public class App extends Application {
             // 主进程 进行一些其他的操作
             Log.d("wsh-daemon", "启动主进程");
 
+        }else if ("com.shihoo.daemonlibrary:work".equals(processName)){
+            Log.d("wsh-daemon", "启动了工作进程");
         }else if ("com.shihoo.daemonlibrary:watch".equals(processName)){
             DaemonEnv.mWorkServiceClass = MainWorkService.class;
             Log.d("wsh-daemon", "启动了看门狗进程");
         }
+
 
     }
 }

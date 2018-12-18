@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Messenger;
+import android.util.Log;
 
 import com.shihoo.daemon.AbsWorkService;
 
@@ -23,8 +24,9 @@ public class MainWorkService extends AbsWorkService {
 
 
     //是否 任务完成, 不再需要服务运行?
-    public static boolean IsShouldStopService;
-    public Disposable mDisposable;
+    private boolean IsShouldStopService;
+    private Disposable mDisposable;
+    private long mSaveDataStamp;
 
     /**
      * 是否 任务完成, 不再需要服务运行?
@@ -33,37 +35,6 @@ public class MainWorkService extends AbsWorkService {
     @Override
     public Boolean shouldStopService(Intent intent, int flags, int startId) {
         return IsShouldStopService;
-    }
-
-    @Override
-    public void startWork(Intent intent, int flags, int startId) {
-        System.out.println("检查磁盘中是否有上次销毁时保存的数据");
-        mDisposable = Observable
-                .interval(3, TimeUnit.SECONDS)
-                //取消任务时取消定时唤醒
-                .doOnDispose(new Action() {
-                    @Override
-                    public void run() throws Exception {
-                        System.out.println("保存数据到磁盘。");
-
-                    }
-                })
-                .subscribe(new Consumer<Long>() {
-                    @Override
-                    public void accept(Long aLong) throws Exception {
-                        System.out.println("每 3 秒采集一次数据... count = " + aLong);
-                        if (aLong > 0 && aLong % 18 == 0) System.out.println("保存数据到磁盘。 saveCount = " + (aLong / 18 - 1));
-
-                    }
-                });
-    }
-
-    @Override
-    public void stopWork(Intent intent, int flags, int startId) {
-        //取消对任务的订阅
-        if (mDisposable !=null && !mDisposable.isDisposed()){
-            mDisposable.dispose();
-        }
     }
 
     /**
@@ -84,6 +55,54 @@ public class MainWorkService extends AbsWorkService {
 
     @Override
     public void onServiceKilled(Intent rootIntent) {
-        System.out.println("保存数据到磁盘。");
+        saveData();
+        Log.d("wsh-daemon", "onServiceKilled --- 保存数据到磁盘");
     }
+
+    @Override
+    public void stopWork(Intent intent, int flags, int startId) {
+        IsShouldStopService = true;
+        //取消对任务的订阅
+        if (mDisposable !=null && !mDisposable.isDisposed()){
+            mDisposable.dispose();
+        }
+        saveData();
+    }
+
+    @Override
+    public void startWork(Intent intent, int flags, int startId) {
+        Log.d("wsh-daemon", "检查磁盘中是否有上次销毁时保存的数据");
+        mDisposable = Observable
+                .interval(3, TimeUnit.SECONDS)
+                //取消任务时取消定时唤醒
+                .doOnDispose(new Action() {
+                    @Override
+                    public void run() throws Exception {
+                        Log.d("wsh-daemon", " -- doOnDispose ---  取消订阅 .... ");
+                        saveData();
+                    }
+                })
+                .subscribe(new Consumer<Long>() {
+                    @Override
+                    public void accept(Long aLong) throws Exception {
+                        Log.d("wsh-daemon", "每 3 秒采集一次数据... count = " + aLong);
+                        if (aLong > 0 && aLong % 18 == 0){
+                            saveData();
+                            Log.d("wsh-daemon", "   采集数据  saveCount = " + (aLong / 18 - 1));
+                        }
+
+                    }
+                });
+    }
+
+
+    private void saveData(){
+        long stamp = System.currentTimeMillis()/1000;
+        if (Math.abs(mSaveDataStamp - stamp) >= 3){
+            // 处理业务逻辑
+            Log.d("wsh-daemon", "保存数据到磁盘。");
+        }
+        mSaveDataStamp = stamp;
+    }
+
 }

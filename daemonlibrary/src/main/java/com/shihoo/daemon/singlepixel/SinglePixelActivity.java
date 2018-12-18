@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Window;
 import android.view.WindowManager;
@@ -39,6 +40,7 @@ public class SinglePixelActivity extends Activity {
     @Override
     protected void onDestroy() {
 //        if (!SystemUtils.isAppAlive(this, Constant.PACKAGE_NAME)) {
+        Log.d("wsh-daemon", " 1 像素Activity --- onDestroy");
             Intent intentAlive = new Intent(this, WatchDogService.class);
             startService(intentAlive);
 //        }

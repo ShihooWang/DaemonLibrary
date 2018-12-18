@@ -31,7 +31,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
 
-        DaemonEnv.startServiceSafely(mContext,new Intent(mContext, WatchDogService.class),
-                    WatchProcessPrefHelper.getIsStartDaemon(mContext));
+        DaemonEnv.startServiceSafely(mContext,WatchDogService.class,
+                    !WatchProcessPrefHelper.getIsStartDaemon(mContext));
     }
 }

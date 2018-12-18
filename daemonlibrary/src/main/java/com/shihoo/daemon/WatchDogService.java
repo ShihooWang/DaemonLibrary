@@ -57,7 +57,7 @@ public class WatchDogService extends Service {
         if (DaemonEnv.mWorkServiceClass != null) {
             DaemonEnv.startServiceMayBind(WatchDogService.this, DaemonEnv.mWorkServiceClass, mConnection,IsShouldStopSelf);
             DaemonEnv.startServiceSafely(WatchDogService.this,
-                    new Intent(WatchDogService.this, PlayMusicService.class),!IsShouldStopSelf);
+                    PlayMusicService.class,IsShouldStopSelf);
         }
     }
 
@@ -75,7 +75,7 @@ public class WatchDogService extends Service {
             startForeground(HASH_CODE, new Notification());
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2)
                 DaemonEnv.startServiceSafely(WatchDogService.this,
-                        new Intent(WatchDogService.this, WatchDogNotificationService.class),!IsShouldStopSelf);
+                        WatchDogNotificationService.class,IsShouldStopSelf);
         }
 
         //定时检查 AbsWorkService 是否在运行，如果不在运行就把它拉起来
@@ -125,20 +125,22 @@ public class WatchDogService extends Service {
 
     @Override
     public final int onStartCommand(Intent intent, int flags, int startId) {
+
         return onStart(intent, flags, startId);
     }
 
     @Override
     public final IBinder onBind(Intent intent) {
-        onStart(intent, 0, 0);
+//        onStart(intent, 0, 0);
         return new Messenger(new Handler()).getBinder();
     }
 
     private void onEnd(Intent rootIntent) {
+        Log.d("wsh-daemon", "onEnd ----  搞事 + IsShouldStopSelf  ：" + IsShouldStopSelf);
         startBindWorkServices();
         DaemonEnv.startServiceSafely(WatchDogService.this,
-                new Intent(WatchDogService.this,WatchDogService.class)
-                ,!IsShouldStopSelf);
+                WatchDogService.class
+                ,IsShouldStopSelf);
     }
 
     /**
@@ -146,6 +148,7 @@ public class WatchDogService extends Service {
      */
     @Override
     public void onTaskRemoved(Intent rootIntent) {
+        Log.d("wsh-daemon", "onEnd ----  搞事 + onTaskRemoved  ：" + IsShouldStopSelf);
         onEnd(rootIntent);
     }
 
@@ -154,6 +157,7 @@ public class WatchDogService extends Service {
      */
     @Override
     public void onDestroy() {
+        Log.d("wsh-daemon", "onEnd ----  搞事 + onDestroy  ：" + IsShouldStopSelf);
         onEnd(null);
         startUnRegisterReceiver();
     }
@@ -172,6 +176,10 @@ public class WatchDogService extends Service {
         IsShouldStopSelf = true;
         startUnRegisterReceiver();
         cancelJobAlarmSub();
+        if (mConnection.mConnectedState) {
+            unbindService(mConnection);
+        }
+//        System.exit(0);
         exit();
     }
 
@@ -182,7 +190,7 @@ public class WatchDogService extends Service {
                 stopSelf();
                 System.exit(0);
             }
-        },1000);
+        },3000);
     }
 
 

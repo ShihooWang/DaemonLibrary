@@ -19,7 +19,8 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".MainWorkService"/>
+        <service android:name=".MainWorkService"
+            android:process=":work"/>
 
     </application>
 

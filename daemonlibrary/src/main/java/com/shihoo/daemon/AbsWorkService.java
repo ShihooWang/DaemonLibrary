@@ -28,15 +28,15 @@ public abstract class AbsWorkService extends Service {
     protected static final int HASH_CODE = 1;
     private StopBroadcastReceiver stopBroadcastReceiver;
 
-//    private AbsServiceConnection mConnection = new AbsServiceConnection() {
-//
-//        @Override
-//        public void onDisconnected(ComponentName name) {
-//            Boolean shouldStopService = shouldStopService(null, 0, 0);
-//            DaemonEnv.startServiceMayBind(AbsWorkService.this, WatchDogService.class, mConnection,shouldStopService);
-//        }
-//
-//    };
+    private AbsServiceConnection mConnection = new AbsServiceConnection() {
+
+        @Override
+        public void onDisconnected(ComponentName name) {
+            Boolean shouldStopService = shouldStopService(null, 0, 0);
+            DaemonEnv.startServiceMayBind(AbsWorkService.this, WatchDogService.class, mConnection,shouldStopService);
+        }
+
+    };
 
 
     @Override
@@ -55,8 +55,8 @@ public abstract class AbsWorkService extends Service {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
                 Boolean shouldStopService = shouldStopService(null, 0, 0);
                 DaemonEnv.startServiceSafely(AbsWorkService.this,
-                        new Intent(getApplication(), WorkNotificationService.class),
-                        !shouldStopService);
+                        WorkNotificationService.class,
+                        shouldStopService);
             }
         }
         getPackageManager().setComponentEnabledSetting(new ComponentName(getPackageName(), WatchDogService.class.getName()),
@@ -72,7 +72,7 @@ public abstract class AbsWorkService extends Service {
     @NonNull
     @Override
     public IBinder onBind(Intent intent) {
-        onStart(intent, 0, 0);
+//        onStart(intent, 0, 0);
         return onBindService(intent, null);
     }
 
@@ -80,8 +80,8 @@ public abstract class AbsWorkService extends Service {
         onServiceKilled(rootIntent);
         // // 不同的进程，所有的静态和单例都会失效
         Boolean shouldStopService = shouldStopService(null, 0, 0);
-//        DaemonEnv.startServiceMayBind(AbsWorkService.this,WatchDogService.class,mConnection,shouldStopService);
-        DaemonEnv.startServiceSafely(AbsWorkService.this,WatchDogService.class,!shouldStopService);
+        Log.d("wsh-daemon", "onEnd ----  搞事 + onDestroy  ：" + shouldStopService);
+        DaemonEnv.startServiceMayBind(AbsWorkService.this,WatchDogService.class,mConnection,shouldStopService);
     }
 
     /**
@@ -89,6 +89,7 @@ public abstract class AbsWorkService extends Service {
      */
     @Override
     public void onTaskRemoved(Intent rootIntent) {
+        Log.d("wsh-daemon", "onEnd ----  搞事 + onTaskRemoved  ：");
         onEnd(rootIntent);
     }
 
@@ -97,6 +98,7 @@ public abstract class AbsWorkService extends Service {
      */
     @Override
     public void onDestroy() {
+        Log.d("wsh-daemon", "onEnd ----  搞事 + onTaskRemoved  ：");
         onEnd(null);
         startUnRegisterReceiver();
     }
@@ -131,16 +133,13 @@ public abstract class AbsWorkService extends Service {
 
         //启动守护服务，运行在:watch子进程中
         Boolean shouldStopService = shouldStopService(null, 0, 0);
-//        DaemonEnv.startServiceMayBind(AbsWorkService.this,WatchDogService.class,mConnection,shouldStopService);
-        DaemonEnv.startServiceSafely(AbsWorkService.this,WatchDogService.class,!shouldStopService);
+        DaemonEnv.startServiceMayBind(AbsWorkService.this,WatchDogService.class,mConnection,shouldStopService);
 
         //业务逻辑: 实际使用时，根据需求，将这里更改为自定义的条件，判定服务应当启动还是停止 (任务是否需要运行)
-        if (shouldStopService != null) {
-            if (shouldStopService) {
-                stopService(intent, flags, startId);
-            } else {
-                startService(intent, flags, startId);
-            }
+        if (shouldStopService) {
+            stopService(intent, flags, startId);
+        } else {
+            startService(intent, flags, startId);
         }
 
         return START_STICKY;
@@ -165,13 +164,17 @@ public abstract class AbsWorkService extends Service {
      * 2.我们希望 AbsWorkService 起到一个类似于控制台的角色，即 AbsWorkService 始终运行 (无论任务是否需要运行)，
      * 而是通过 onStart() 里自定义的条件，来决定服务是否应当启动或停止。
      */
-    void stopService(Intent intent, int flags, int startId) {
+    private void stopService(Intent intent, int flags, int startId) {
         //取消对任务的订阅
 
         startUnRegisterReceiver();
 
         // 给实现者处理业务逻辑
         stopWork(intent, flags, startId);
+
+        if (mConnection.mConnectedState) {
+            unbindService(mConnection);
+        }
 
         exit();
     }
@@ -181,9 +184,9 @@ public abstract class AbsWorkService extends Service {
             @Override
             public void run() {
                 stopSelf();
-//                System.exit(0);
+                System.exit(0);
             }
-        },1000);
+        },3000);
     }
 
 

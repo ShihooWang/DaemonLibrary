@@ -9,7 +9,7 @@ import android.content.Context;
  *
  * 用于多进程通讯的 SharedPreferences
  *
- * 此处存在着风险  githu --> PreferencesProvider 项目
+ * 此处存在着风险  github --> PreferencesProvider 项目
  */
 
 public class WatchProcessPrefHelper {

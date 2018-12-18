@@ -6,10 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.MediaPlayer;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
-import android.os.Messenger;
 import android.util.Log;
 
 /**
@@ -53,7 +50,7 @@ public class PlayMusicService extends Service {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    Log.d("wsh", "开始后台播放音乐");
+                    Log.d("wsh-daemon", "开始后台播放音乐");
                     mMediaPlayer.start();
                 }
             }).start();
@@ -62,7 +59,7 @@ public class PlayMusicService extends Service {
 
     private void stopPlayMusic() {
         if (mMediaPlayer != null) {
-            Log.d("wsh", "关闭后台播放音乐");
+            Log.d("wsh-daemon", "关闭后台播放音乐");
             mMediaPlayer.stop();
         }
     }
@@ -71,9 +68,10 @@ public class PlayMusicService extends Service {
     public void onDestroy() {
         super.onDestroy();
         stopPlayMusic();
-        Log.d("wsh",  "---->onCreate,停止服务");
+        Log.d("wsh-daemon",  "----> stopPlayMusic ,停止服务");
         // 重启自己
         if (!mNeedStop) {
+            Log.d("wsh-daemon",  "----> PlayMusic ,重启服务");
             Intent intent = new Intent(getApplicationContext(), PlayMusicService.class);
             startService(intent);
         }
@@ -99,6 +97,7 @@ public class PlayMusicService extends Service {
      * 停止自己
      */
     private void stopService(){
+        mNeedStop = true;
         startUnRegisterReceiver();
         stopSelf();
     }
