@@ -1,4 +1,23 @@
 # DaemonLibrary
+
+## 使用方式
+#### Step 1. Add the JitPack repository to your build file
+```
+allprojects {
+		repositories {
+			...
+			maven { url 'https://jitpack.io' }
+		}
+	}
+```
+
+#### Step 2. Add the dependency
+~~~
+	dependencies {
+	        implementation 'com.github.wangshihu123:DaemonLibrary:v0.0.3'
+	}
+~~~
+
 ## Android后台保活，这里有你需要的所有姿势。2019，最新版本。
 老规矩，先上项目地址：
 https://github.com/wangshihu123/DaemonLibrary
