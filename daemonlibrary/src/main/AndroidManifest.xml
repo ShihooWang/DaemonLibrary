@@ -20,9 +20,12 @@
             </intent-filter>
         </receiver>
 
+        <service android:name="com.shihoo.daemon.AbsWorkService$WorkNotificationService"/>
+
+        <!-- 广播接收者  receiver 进程-->
         <receiver
             android:name="com.shihoo.daemon.WakeUpReceiver$WakeUpAutoStartReceiver"
-            android:process=":watch">
+            android:process=":receiver">
             <!-- 手机启动 -->
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
@@ -49,8 +52,9 @@
 
         </receiver>
 
-        <service android:name="com.shihoo.daemon.AbsWorkService$WorkNotificationService"/>
 
+
+        <!-- 守护进程 watch -->
         <service
             android:name="com.shihoo.daemon.JobSchedulerService"
             android:permission="android.permission.BIND_JOB_SERVICE"
