@@ -136,11 +136,17 @@ public class WatchDogService extends Service {
     }
 
     private void onEnd(Intent rootIntent) {
+        if (IsShouldStopSelf){
+            return;
+        }
         Log.d("wsh-daemon", "onEnd ----  搞事 + IsShouldStopSelf  ：" + IsShouldStopSelf);
-        startBindWorkServices();
+//        startBindWorkServices();
+        DaemonEnv.startServiceSafely(WatchDogService.this,
+                DaemonEnv.mWorkServiceClass
+                ,false);
         DaemonEnv.startServiceSafely(WatchDogService.this,
                 WatchDogService.class
-                ,IsShouldStopSelf);
+                ,false);
     }
 
     /**

@@ -80,8 +80,12 @@ public abstract class AbsWorkService extends Service {
         onServiceKilled(rootIntent);
         // // 不同的进程，所有的静态和单例都会失效
         Boolean shouldStopService = shouldStopService(null, 0, 0);
+        if (shouldStopService){
+            return;
+        }
         Log.d("wsh-daemon", "onEnd ----  搞事 + onDestroy  ：" + shouldStopService);
-        DaemonEnv.startServiceMayBind(AbsWorkService.this,WatchDogService.class,mConnection,shouldStopService);
+//        DaemonEnv.startServiceMayBind(AbsWorkService.this,WatchDogService.class,mConnection,shouldStopService);
+        DaemonEnv.startServiceSafely(AbsWorkService.this,WatchDogService.class,false);
     }
 
     /**
@@ -98,7 +102,7 @@ public abstract class AbsWorkService extends Service {
      */
     @Override
     public void onDestroy() {
-        Log.d("wsh-daemon", "onEnd ----  搞事 + onTaskRemoved  ：");
+        Log.d("wsh-daemon", "onEnd ----  搞事 + onDestroy  ：");
         onEnd(null);
         startUnRegisterReceiver();
     }
