@@ -32,10 +32,14 @@ https://github.com/wangshihu123/DaemonLibrary
   	我们的需求是：开启户外运动，需要永驻后台，采集收据，使用过咕咚、悦跑圈的都知道。
   	但是不同的机型及厂家，让我们的应用无时无刻地在后台被杀。泪牛满面。。。
   渡尽劫波兄弟在-----做IM推送的小伙伴同样有这样的情况：
+
   http://www.52im.net/forum.php?mod=viewthread&tid=429&highlight=%B1%A3%BB%EE
+
   还有应用保活终极系列（1-3）：（分析了咕咚，乐动力，悦动圈。捎带着科普了微信和QQ）
+
   http://www.52im.net/forum.php?mod=viewthread&tid=1135&highlight=%B1%A3%BB%EE
-  十八里神仙，各显神通。
+
+  十八路神仙，各显神通。
   
  
 ## 3.保活总结
