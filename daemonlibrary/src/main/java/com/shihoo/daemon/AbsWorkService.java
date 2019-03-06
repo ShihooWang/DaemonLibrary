@@ -141,7 +141,9 @@ public abstract class AbsWorkService extends Service {
 
         //业务逻辑: 实际使用时，根据需求，将这里更改为自定义的条件，判定服务应当启动还是停止 (任务是否需要运行)
         if (shouldStopService) {
-            stopService(intent, flags, startId);
+            // 此处不比重复关闭服务。否则mConnection.mConnectedState的状态没有来得及改变，
+            //  再次unbindService(conn)服务会导致 Service not registered 异常抛出。 服务启动和关闭都需要耗时，段时间内不宜频繁开启和关闭。
+            // stopService(intent, flags, startId); 
         } else {
             startService(intent, flags, startId);
         }
