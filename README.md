@@ -14,7 +14,7 @@ allprojects {
 #### Step 2. Add the dependency
 ~~~
 	dependencies {
-	        implementation 'com.github.wangshihu123:DaemonLibrary:v0.0.3'
+	        implementation 'com.github.wangshihu123:DaemonLibrary:v0.0.4'
 	}
 ~~~
 
