@@ -166,6 +166,7 @@ public class WatchDogService extends Service {
         Log.d("wsh-daemon", "onEnd ----  搞事 + onDestroy  ：" + IsShouldStopSelf);
         onEnd(null);
         startUnRegisterReceiver();
+        stopScreenListener();
     }
 
     @Override
@@ -185,6 +186,7 @@ public class WatchDogService extends Service {
         if (mConnection.mConnectedState) {
             unbindService(mConnection);
         }
+        stopScreenListener();
 //        System.exit(0);
         exit();
     }
@@ -266,6 +268,14 @@ public class WatchDogService extends Service {
         mScreenListener.setScreenReceiverListener(mScreenListenerer);
     }
 
+     private void stopScreenListener(){
+        // 取消注册
+        if (mScreenListener != null){
+            mScreenListener.stopScreenReceiverListener();
+        }
+        mScreenListenerer = null;
+        mScreenManager = null;
+    }
 
     private ScreenReceiverUtil.SreenStateListener mScreenListenerer = new ScreenReceiverUtil.SreenStateListener() {
         @Override
@@ -277,13 +287,17 @@ public class WatchDogService extends Service {
 
         @Override
         public void onSreenOff() {  //锁屏
-            mScreenManager.startActivity();
+            if (mScreenManager != null) {
+                mScreenManager.startActivity();
+            }
             Log.d("wsh-daemon", "打开了1像素Activity");
         }
 
         @Override
         public void onUserPresent() {
-            mScreenManager.finishActivity(); // 解锁
+            if (mScreenManager != null) {
+                mScreenManager.finishActivity(); // 解锁
+            }
             Log.d("wsh-daemon", "关闭了1像素Activity");
         }
     };
