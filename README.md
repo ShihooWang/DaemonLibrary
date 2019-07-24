@@ -18,7 +18,7 @@ allprojects {
 	}
 ~~~
 
-## Android后台保活，这里有你需要的所有姿势。2019，最新版本。
+## Android后台保活，这里有你需要的所有姿势。2019，基于API26 Android O 最新版本。
 老规矩，先上项目地址：
 https://github.com/wangshihu123/DaemonLibrary
   结合网上各路大神及自己的项目保活实战（在此不方便透露项目），给出了最新的保活姿势。（如有雷同，纯属巧合）
