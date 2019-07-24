@@ -1,4 +1,4 @@
-package com.shihoo.daemon;
+package com.shihoo.daemon.watch;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -9,6 +9,10 @@ import android.media.MediaPlayer;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.shihoo.daemon.DaemonEnv;
+import com.shihoo.daemon.ForegroundNotificationUtils;
+import com.shihoo.daemon.R;
+
 /**
  * Created by shihoo ON 2018/12/13.
  * Email shihu.wang@bodyplus.cc 451082005@qq.com
@@ -16,24 +20,19 @@ import android.util.Log;
  * 后台播放无声音乐
  */
 public class PlayMusicService extends Service {
-
     private boolean mNeedStop = false; //控制是否播放音频
     private MediaPlayer mMediaPlayer;
     private StopBroadcastReceiver stopBroadcastReceiver;
 
-//    private IBinder mIBinder;
-
     @Override
     public IBinder onBind(Intent intent) {
-//        return mIBinder;
         return null;
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
-//        mIBinder = new Messenger(new Handler()).getBinder();
-
+        ForegroundNotificationUtils.startForegroundNotification(this);
         startRegisterReceiver();
         mMediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.no_notice);
         mMediaPlayer.setLooping(true);
@@ -98,6 +97,7 @@ public class PlayMusicService extends Service {
      */
     private void stopService(){
         mNeedStop = true;
+        stopPlayMusic();
         startUnRegisterReceiver();
         stopSelf();
     }

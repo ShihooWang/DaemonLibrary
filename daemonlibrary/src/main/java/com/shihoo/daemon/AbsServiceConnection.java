@@ -9,10 +9,10 @@ import android.os.IBinder;
  * Email shihu.wang@bodyplus.cc 451082005@qq.com
  *
  */
-abstract class AbsServiceConnection implements ServiceConnection {
+public abstract class AbsServiceConnection implements ServiceConnection {
 
     // 当前绑定的状态
-    boolean mConnectedState = false;
+    public boolean mConnectedState = false;
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
@@ -21,8 +21,10 @@ abstract class AbsServiceConnection implements ServiceConnection {
 
     @Override
     public void onServiceDisconnected(ComponentName name) {
-        mConnectedState = false;
-        onDisconnected(name);
+        if (mConnectedState) {
+            mConnectedState = false;
+            onDisconnected(name);
+        }
     }
 
     @Override

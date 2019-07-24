@@ -9,13 +9,12 @@ import android.accounts.Account;
 import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SyncResult;
 import android.os.Bundle;
 
 import com.shihoo.daemon.DaemonEnv;
-import com.shihoo.daemon.WatchDogService;
-import com.shihoo.daemon.WatchProcessPrefHelper;
+import com.shihoo.daemon.watch.WatchDogService;
+import com.shihoo.daemon.watch.WatchProcessPrefHelper;
 
 
 public class SyncAdapter extends AbstractThreadedSyncAdapter {
@@ -30,8 +29,6 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
-
-        DaemonEnv.startServiceSafely(mContext,WatchDogService.class,
-                    !WatchProcessPrefHelper.getIsStartDaemon(mContext));
+        DaemonEnv.startServiceSafely(mContext,WatchDogService.class);
     }
 }

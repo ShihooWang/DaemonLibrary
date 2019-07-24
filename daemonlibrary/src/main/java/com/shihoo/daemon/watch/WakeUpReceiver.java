@@ -1,8 +1,13 @@
-package com.shihoo.daemon;
+package com.shihoo.daemon.watch;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+
+import com.shihoo.daemon.DaemonEnv;
+import com.shihoo.daemon.watch.WatchDogService;
+import com.shihoo.daemon.watch.WatchProcessPrefHelper;
 
 public class WakeUpReceiver extends BroadcastReceiver {
 
@@ -14,18 +19,27 @@ public class WakeUpReceiver extends BroadcastReceiver {
      * Service 内部做了判断，若 Service 已在运行，不会重复启动.
      * 运行在:watch子进程中.
      */
+    @SuppressLint("UnsafeProtectedBroadcastReceiver")
     @Override
     public void onReceive(Context context, Intent intent) {
-        DaemonEnv.startServiceSafely(context,WatchDogService.class,
-                !WatchProcessPrefHelper.getIsStartDaemon(context));
+        DaemonEnv.startServiceSafely(context, WatchDogService.class);
     }
 
     public static class WakeUpAutoStartReceiver extends BroadcastReceiver {
 
+        @SuppressLint("UnsafeProtectedBroadcastReceiver")
         @Override
         public void onReceive(Context context, Intent intent) {
-            DaemonEnv.startServiceSafely(context,WatchDogService.class,
-                    !WatchProcessPrefHelper.getIsStartDaemon(context));
+            DaemonEnv.startServiceSafely(context,WatchDogService.class);
+        }
+    }
+
+    public static class StartWatchReceiver extends BroadcastReceiver {
+
+        @SuppressLint("UnsafeProtectedBroadcastReceiver")
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            WatchProcessPrefHelper.setIsStartSDaemon(context,true);
         }
     }
 }

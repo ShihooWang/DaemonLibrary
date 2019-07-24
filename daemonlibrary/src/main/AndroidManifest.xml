@@ -11,21 +11,30 @@
         android:label="@string/app_name"
         >
         <receiver
-            android:name="com.shihoo.daemon.WakeUpReceiver"
+            android:name="com.shihoo.daemon.watch.WakeUpReceiver"
             android:process=":watch">
             <intent-filter>
                 <action android:name="android.intent.action.USER_PRESENT"/>
-                <action android:name="android.intent.action.ACTION_POWER_CONNECTED"/>
-                <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED"/>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+                <action android:name="android.intent.action.USER_PRESENT" />
+                <action android:name="android.intent.action.MEDIA_MOUNTED" />
+                <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
+                <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
             </intent-filter>
         </receiver>
 
-        <service android:name="com.shihoo.daemon.AbsWorkService$WorkNotificationService"/>
-
+        <receiver
+            android:name="com.shihoo.daemon.watch.WakeUpReceiver$StartWatchReceiver"
+            android:process=":watch">
+            <intent-filter>
+                <action android:name="com.shihoo.START_JOB_ALARM_SUB"/>
+            </intent-filter>
+        </receiver>
         <!-- 广播接收者  receiver 进程-->
         <receiver
-            android:name="com.shihoo.daemon.WakeUpReceiver$WakeUpAutoStartReceiver"
-            android:process=":receiver">
+            android:name="com.shihoo.daemon.watch.WakeUpReceiver$WakeUpAutoStartReceiver"
+            android:process=":watch">
             <!-- 手机启动 -->
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
@@ -56,18 +65,14 @@
 
         <!-- 守护进程 watch -->
         <service
-            android:name="com.shihoo.daemon.JobSchedulerService"
+            android:name="com.shihoo.daemon.watch.JobSchedulerService"
             android:permission="android.permission.BIND_JOB_SERVICE"
             android:enabled="true"
             android:exported="true"
             android:process=":watch"/>
 
         <service
-            android:name="com.shihoo.daemon.WatchDogService"
-            android:process=":watch"/>
-
-        <service
-            android:name="com.shihoo.daemon.WatchDogService$WatchDogNotificationService"
+            android:name="com.shihoo.daemon.watch.WatchDogService"
             android:process=":watch"/>
 
         <activity
@@ -77,9 +82,9 @@
             android:finishOnTaskLaunch="false"
             android:launchMode="singleInstance"
             android:theme="@style/SingleActivityStyle"
-            android:process=":watch"/>
+            />
 
-        <service android:name=".PlayMusicService"
+        <service android:name=".watch.PlayMusicService"
             android:process=":watch"/>
 
     </application>

@@ -20,8 +20,9 @@
         </activity>
 
         <service android:name=".MainWorkService"
-            android:process=":work"/>
-
+            />
+        <!-- 注意 ： 看业务需求，工作Service是否要放在主进程还是work进程 ， 大部业务分放在主进程即可-->
+        <!--android:process=":work"-->
     </application>
 
 </manifest>

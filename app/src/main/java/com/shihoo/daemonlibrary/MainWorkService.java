@@ -6,7 +6,7 @@ import android.os.IBinder;
 import android.os.Messenger;
 import android.util.Log;
 
-import com.shihoo.daemon.AbsWorkService;
+import com.shihoo.daemon.work.AbsWorkService;
 
 import java.util.concurrent.TimeUnit;
 
@@ -22,9 +22,6 @@ import io.reactivex.functions.Consumer;
  */
 public class MainWorkService extends AbsWorkService {
 
-
-    //是否 任务完成, 不再需要服务运行?
-    private boolean IsShouldStopService;
     private Disposable mDisposable;
     private long mSaveDataStamp;
 
@@ -33,8 +30,8 @@ public class MainWorkService extends AbsWorkService {
      * @return 应当停止服务, true; 应当启动服务, false; 无法判断, 什么也不做, null.
      */
     @Override
-    public Boolean shouldStopService(Intent intent, int flags, int startId) {
-        return IsShouldStopService;
+    public Boolean needStartWorkService() {
+        return MainActivity.isCanStartWorkService;
     }
 
     /**
@@ -42,7 +39,7 @@ public class MainWorkService extends AbsWorkService {
      * @return 任务正在运行, true; 任务当前不在运行, false; 无法判断, 什么也不做, null.
      */
     @Override
-    public Boolean isWorkRunning(Intent intent, int flags, int startId) {
+    public Boolean isWorkRunning() {
         //若还没有取消订阅, 就说明任务仍在运行.
         return mDisposable != null && !mDisposable.isDisposed();
     }
@@ -54,14 +51,13 @@ public class MainWorkService extends AbsWorkService {
     }
 
     @Override
-    public void onServiceKilled(Intent rootIntent) {
+    public void onServiceKilled() {
         saveData();
         Log.d("wsh-daemon", "onServiceKilled --- 保存数据到磁盘");
     }
 
     @Override
-    public void stopWork(Intent intent, int flags, int startId) {
-        IsShouldStopService = true;
+    public void stopWork() {
         //取消对任务的订阅
         if (mDisposable !=null && !mDisposable.isDisposed()){
             mDisposable.dispose();
@@ -70,7 +66,7 @@ public class MainWorkService extends AbsWorkService {
     }
 
     @Override
-    public void startWork(Intent intent, int flags, int startId) {
+    public void startWork() {
         Log.d("wsh-daemon", "检查磁盘中是否有上次销毁时保存的数据");
         mDisposable = Observable
                 .interval(3, TimeUnit.SECONDS)
@@ -90,7 +86,6 @@ public class MainWorkService extends AbsWorkService {
                             saveData();
                             Log.d("wsh-daemon", "   采集数据  saveCount = " + (aLong / 18 - 1));
                         }
-
                     }
                 });
     }

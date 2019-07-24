@@ -1,15 +1,19 @@
 package com.shihoo.daemon.singlepixel;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.Window;
 import android.view.WindowManager;
 
-import com.shihoo.daemon.WatchDogService;
+import com.shihoo.daemon.watch.WatchDogService;
 
 /**
  * Created by shihoo ON 2018/12/12.
@@ -45,5 +49,41 @@ public class SinglePixelActivity extends Activity {
             startService(intentAlive);
 //        }
         super.onDestroy();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (isScreenOn()) {
+            finishSelf();
+        }
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent motionEvent) {
+        finishSelf();
+        return super.dispatchTouchEvent(motionEvent);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent motionEvent) {
+        finishSelf();
+        return super.onTouchEvent(motionEvent);
+    }
+
+    public void finishSelf() {
+        if (!isFinishing()) {
+            finish();
+        }
+    }
+
+
+    private boolean isScreenOn() {
+        PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
+            return powerManager.isInteractive();
+        } else {
+            return powerManager.isScreenOn();
+        }
     }
 }

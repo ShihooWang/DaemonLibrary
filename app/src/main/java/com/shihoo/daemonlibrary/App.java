@@ -4,6 +4,7 @@ import android.app.Application;
 import android.util.Log;
 
 import com.shihoo.daemon.DaemonEnv;
+import com.shihoo.daemon.watch.WatchProcessPrefHelper;
 
 /**
  * Created by shihoo ON 2018/12/13.
@@ -26,7 +27,8 @@ public class App extends Application {
         }else if ("com.shihoo.daemonlibrary:work".equals(processName)){
             Log.d("wsh-daemon", "启动了工作进程");
         }else if ("com.shihoo.daemonlibrary:watch".equals(processName)){
-            DaemonEnv.mWorkServiceClass = MainWorkService.class;
+            // 这里要设置下看护进程所启动的主进程信息
+            WatchProcessPrefHelper.mWorkServiceClass = MainWorkService.class;
             Log.d("wsh-daemon", "启动了看门狗进程");
         }
 
