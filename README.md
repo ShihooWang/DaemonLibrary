@@ -2,6 +2,7 @@
 
 ## 使用方式
 #### Step 1. Add the JitPack repository to your build file
+
 ```
 allprojects {
 		repositories {
@@ -12,9 +13,10 @@ allprojects {
 ```
 
 #### Step 2. Add the dependency
+[![](https://jitpack.io/v/ShihooWang/DaemonLibrary.svg)](https://jitpack.io/#ShihooWang/DaemonLibrary)
 ~~~
 	dependencies {
-	        implementation 'com.github.wangshihu123:DaemonLibrary:1.0.0'
+	        implementation 'com.github.wangshihu123:DaemonLibrary:v1.2.0'
 	}
 ~~~
 
