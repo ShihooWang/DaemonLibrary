@@ -4,6 +4,7 @@ import android.app.Application;
 import android.util.Log;
 
 import com.shihoo.daemon.DaemonEnv;
+import com.shihoo.daemon.ForegroundNotificationUtils;
 import com.shihoo.daemon.watch.WatchProcessPrefHelper;
 
 /**
@@ -29,6 +30,10 @@ public class App extends Application {
         }else if ("com.shihoo.daemonlibrary:watch".equals(processName)){
             // 这里要设置下看护进程所启动的主进程信息
             WatchProcessPrefHelper.mWorkServiceClass = MainWorkService.class;
+            // 设置通知栏的UI
+            ForegroundNotificationUtils.setResId(R.drawable.ic_launcher);
+            ForegroundNotificationUtils.setNotifyTitle("我是");
+            ForegroundNotificationUtils.setNotifyContent("渣渣辉");
             Log.d("wsh-daemon", "启动了看门狗进程");
         }
 
