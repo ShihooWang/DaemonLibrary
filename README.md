@@ -16,7 +16,7 @@ allprojects {
 [![](https://jitpack.io/v/ShihooWang/DaemonLibrary.svg)](https://jitpack.io/#ShihooWang/DaemonLibrary)
 ~~~
 	dependencies {
-	        implementation 'com.github.wangshihu123:DaemonLibrary:v1.2.0'
+	        implementation 'com.github.wangshihu123:DaemonLibrary:v1.2.1'
 	}
 ~~~
 
